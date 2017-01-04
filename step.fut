@@ -74,10 +74,10 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 -- Compute interactions and aging for every hood, returning a new
 -- array of hoods.
-fun step (gen: int) (hoods: [w][h]hood): [w][h]hood =
+fun step (gen: int) (hoods: [w][h]hood) (hoodsPress: [w][h]hood): [w][h]hood =
   let randomish = hoodRandoms (w,h) (0,100) gen
-  let envs = map (fn randomish_r hoods_r => map alchemy randomish_r hoods_r)
-                 randomish hoods
+  let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
+                 randomish hoods hoodsPress
   in map (fn r0 r1 => map ageHood r0 r1) randomish
      (map (fn r => map gravity r) envs)
 
@@ -90,9 +90,19 @@ fun ageHood (seed: int) (h: hood): hood =
                     (age (hash (seed^2) % 100) dl)
                     (age (hash (seed^3) % 100) dr)
 
+
+
+
+fun interactions (r: int) (h: hood) (p: hood): hood =
+  let h' = pressure h p
+  in alchemy r h'
+
+fun pressure (h: hood) (p: hood): hood =
+  h
+
 -- Apply alchemy within a hood.
 fun alchemy (r: int) (h: hood): hood =
-  let (ul0, ur0, dl0, dr0) = hoodQuadrants h in
+  let (ul0, ur0, dl0, dr0) = hoodQuadrants h  in
   if ul0 == ur0 && ur0 == dl0 && dl0 == dr0
   then h
   else -- Apply interaction among the components
@@ -101,6 +111,8 @@ fun alchemy (r: int) (h: hood): hood =
        let (dr , dl3) = applyAlchemy r dr2 dl0
        let (dl , ul ) = applyAlchemy r dl3 ul1
        in hoodFromQuadrants ul ur dl dr
+
+
 
 -- Apply gravity within a hood.
 fun gravity (h: hood): hood =
