@@ -1,5 +1,6 @@
 include world
 include alchemy
+include pressure
 
 -- Position in a Margolus neighborhood; ranges from 0-3.
 type marg_pos = int
@@ -98,7 +99,14 @@ fun interactions (r: int) (h: hood) (p: hood): hood =
   in alchemy r h'
 
 fun pressure (h: hood) (p: hood): hood =
-  h
+  let (ul0, ur0, dl0, dr0) = hoodQuadrants h  in
+  let (pul, pur, pdl, pdr) = hoodQuadrants p  in
+  let ul = apply_pressure ul0 pul
+  let ur = apply_pressure ur0 pur
+  let dr = apply_pressure dr0 pdr
+  let dl = apply_pressure dl0 pdl
+  in hoodFromQuadrants ul ur dl dr
+
 
 -- Apply alchemy within a hood.
 fun alchemy (r: int) (h: hood): hood =
