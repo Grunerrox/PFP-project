@@ -1,6 +1,6 @@
 include world
 
-fun apply_pressure (x: element) (p:u8) : element =
-  if x == metal && p > u8(100)
-  then nothing
+fun apply_pressure (x: element) (p:int) : element =
+  if x == metal && p > 1000
+  then sand
   else x

@@ -44,6 +44,10 @@ val num_elems: int = (shape(elems))[0]
 fun isWall (x: element): bool =
   x == torch || x == plant || x == spout || x == metal || x == wall
 
+
+fun isWallInt(x: int) : bool =
+  isWall (u8(x))
+
 fun isFire (x: element): bool =
   x >= fire && x <= fire_end
 

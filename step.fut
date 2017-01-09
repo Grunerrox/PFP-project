@@ -9,10 +9,15 @@ type marg_pos = int
 -- it is more gangsta.
 type hood = (u8,u8,u8,u8)
 
+type phood =(int,int,int,int)
+
 -- The following two functions should be used for all hood
 -- interaction.  Never just pattern patch directly on the value!
 -- Pretend it is an abstract type.
 fun hoodQuadrants ((ul,ur,dl,dr): hood): (element, element, element, element) =
+  (ul,ur,dl,dr)
+
+fun PhoodQuadrants ((ul,ur,dl,dr): phood): (int, int, int, int) =
   (ul,ur,dl,dr)
 
 fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): hood =
@@ -67,38 +72,61 @@ fun hash(x: int): int =
   let x = ((x >> 16) ^ x) * 0x45d9f3b
   let x = ((x >> 16) ^ x) in
   x
-
 val emptyHood : hood =
-  (0u8,0u8,0u8,0u8)
+    (u8(0),u8(0),u8(0),u8(0))
 
-fun hoodPress(hood1 : hood) (hood2 : hood) : hood =
-  let (ul1, ur1, dl1, dr1) = hood1
+val emptyPHood : phood =
+    inthood emptyHood
+
+
+fun inthood (hood:hood) : phood =
+  let (ul,ur, dl , dr) = hood
+  in
+  (int(ul),int(ur),int(dl),int(dr))
+
+fun hoodPress(hood1 : phood) (hood2 : phood) : phood =
+  let (_, _, dl1 , dr1) = hood1
   let (ul2, ur2, dl2, dr2) = hood2
-  let ul = if dl1 == u8(0) then u8(0) else ul1 + dl1 + ul2
-  let ur = if dr1 == u8(0) then ur2 else ur1 + dr1 + ur2
-  let dl = if ul2 == u8(0) then dl2 else ul1 + dl1 + ul2 + dl2
-  let dr = if ur2 == u8(0) then dr2 else ur1 + dr1 + ur2 + dr2
+  let ul = if ul2 == 0 || (isWallInt dl1 && isWallInt ul2)  then 0 else
+    if isWallInt dl1 then  dl1 + ul2 else if isWallInt ul2  then dl1 else dl1 + ul2
+
+  let ur = if ul2 == 0 || (isWallInt dr1 && isWallInt ur2)  then 0 else
+    if isWallInt dr1 then  dr1 + ur2 else if isWallInt ur2  then dr1 else dr1 + ur2
+
+  let dl = if dl2 == 0 || (isWallInt ul2 && isWallInt dl2) then 0 else
+    if isWallInt ul2 then  dl2 else if isWallInt dl2 then ul2 else dl1+ul2+dl2
+
+  let dr = if dr2 == 0 || (isWallInt ur2 && isWallInt dr2) then 0 else
+    if isWallInt ur2 then  dr2 else if isWallInt dr2 then ur2 else dr1+ur2+dr2
+
   in (ul, ur, dl, dr)
 
 
-fun cpressure(hoodsc : [h]hood) : [h]hood =
-  scan hoodPress emptyHood hoodsc
+fun cpressure(hoodsc : [h]phood) : [h]phood =
+  scan hoodPress emptyPHood hoodsc
 
-fun hood_pressure (hoods: [w][h]hood) : [w][h]hood =
-  map (fn x => cpressure x) hoods
+fun hood_pressure (hoods: [w][h]phood) : [w][h]phood =
+  map (fn x => cpressure x)  hoods
+
+fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
+  (map (fn x_r => map inthood  x_r ) hoods)
 
 -- An array with a "random" number for every hood.
 fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]int =
   reshape (w,h)
   (map (fn i => (hash (gen ^ i*4)) % (upper-lower+1) + lower) (iota (w*h)))
 
+fun wall_thickness (hoods: [w][h]phood) : [w][h]phood =
+  hoods
 -- Compute interactions and aging for every hood, returning a new
 -- array of hoods.
 fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
-  let hoodsPress = hood_pressure(hoods)
+  let phoods = hoods_to_phoods hoods
+  let hoodsPress = hood_pressure phoods
+  let thickness = wall_thickness phoods
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
-                 randomish hoods hoodsPress
+                 randomish hoods hoodsPress thickhness
   in map (fn r0 r1 => map ageHood r0 r1) randomish
      (map (fn r => map gravity r) envs)
 
@@ -114,13 +142,13 @@ fun ageHood (seed: int) (h: hood): hood =
 
 
 
-fun interactions (r: int) (h: hood) (p: hood): hood =
+fun interactions (r: int) (h: hood) (p: phood): hood =
   let h' = pressure h p
   in alchemy r h'
 
-fun pressure (h: hood) (p: hood): hood =
+fun pressure (h: hood) (p: phood): hood =
   let (ul0, ur0, dl0, dr0) = hoodQuadrants h  in
-  let (pul, pur, pdl, pdr) = hoodQuadrants p  in
+  let (pul, pur, pdl, pdr) = PhoodQuadrants p  in
   let ul = apply_pressure ul0 pul
   let ur = apply_pressure ur0 pur
   let dr = apply_pressure dr0 pdr
