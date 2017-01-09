@@ -68,6 +68,25 @@ fun hash(x: int): int =
   let x = ((x >> 16) ^ x) in
   x
 
+val emptyHood : hood =
+  (0u8,0u8,0u8,0u8)
+
+fun hoodPress(hood1 : hood) (hood2 : hood) : hood =
+  let (ul1, ur1, dl1, dr1) = hood1
+  let (ul2, ur2, dl2, dr2) = hood2
+  let ul = if dl1 == u8(0) then u8(0) else ul1 + dl1 + ul2
+  let ur = if dr1 == u8(0) then ur2 else ur1 + dr1 + ur2
+  let dl = if ul2 == u8(0) then dl2 else ul1 + dl1 + ul2 + dl2
+  let dr = if ur2 == u8(0) then dr2 else ur1 + dr1 + ur2 + dr2
+  in (ul, ur, dl, dr)
+
+
+fun cpressure(hoodsc : [h]hood) : [h]hood =
+  scan hoodPress emptyHood hoodsc
+
+fun hood_pressure (hoods: [w][h]hood) : [w][h]hood =
+  map (fn x => cpressure x) hoods
+
 -- An array with a "random" number for every hood.
 fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]int =
   reshape (w,h)
@@ -75,7 +94,8 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 -- Compute interactions and aging for every hood, returning a new
 -- array of hoods.
-fun step (gen: int) (hoods: [w][h]hood) (hoodsPress: [w][h]hood): [w][h]hood =
+fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
+  let hoodsPress = hood_pressure(hoods)
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
                  randomish hoods hoodsPress

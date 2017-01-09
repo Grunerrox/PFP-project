@@ -1,6 +1,7 @@
 include step
 include draw
 
+
 -- A hood packed into a single scalar value.
 type packed_hood = u32
 
@@ -61,29 +62,11 @@ fun new_game_with (ww:int,wh:int) (e: element): game_state =
      replicate w (replicate h (packHood (hoodFromQuadrants e e e e))),
      ww, wh)
 
-val emptyHood : hood =
-  (0u8,0u8,0u8,0u8)
 
-fun hoodPress(hood1 : hood) (hood2 : hood) : hood =
-  let (ul1, ur1, dl1, dr1) = hood1
-  let (ul2, ur2, dl2, dr2) = hood2
-  let ul = if dl1 == u8(0) then ul2 else ul1 + dl1 + ul2
-  let ur = if dr1 == u8(0) then ur2 else ur1 + dr1 + ur2
-  let dl = if ul2 == u8(0) then dl2 else ul1 + dl1 + ul2 + dl2
-  let dr = if ur2 == u8(0) then dr2 else ur1 + dr1 + ur2 + dr2
-  in (ul, ur, dl, dr)
-
-
-fun cpressure(hoodsc : [h]hood) : [h]hood =
-  scan hoodPress emptyHood hoodsc
-
-fun hood_pressure (hoods: [w][h]hood) : [w][h]hood =
-  map (fn x => cpressure x) hoods
 
 entry step_game(gen: int, hoods: [w][h]packed_hood, ww: int, wh: int): game_state =
   let hoods' = (shiftHoods (gen%2) hoods)
-  let hoodsPress = hood_pressure hoods'
-  let hoods'' = step (gen+1) hoods' hoodsPress
+  let hoods'' = step (gen+1) hoods'
 
   in (gen+1, packWorld hoods'', ww, wh)
 
