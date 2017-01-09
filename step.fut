@@ -123,10 +123,9 @@ fun wall_thickness (hoods: [w][h]phood) : [w][h]phood =
 fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
   let phoods = hoods_to_phoods hoods
   let hoodsPress = hood_pressure phoods
-  let thickness = wall_thickness phoods
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
-                 randomish hoods hoodsPress thickhness
+                 randomish hoods hoodsPress
   in map (fn r0 r1 => map ageHood r0 r1) randomish
      (map (fn r => map gravity r) envs)
 
