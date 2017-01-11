@@ -84,7 +84,25 @@ fun inthood (hood:hood) : phood =
   in
   (int(ul),int(ur),int(dl),int(dr))
 
-fun hoodPress(hood1 : phood) (hood2 : phood) : phood =
+
+fun hood_to_array (hood:hood) : [2][2]int =
+  let (ul,ur,dl,dr) = inthood hood
+  in [[ul,ur],[dl,dr]]
+
+fun array_to_phood(arr : [2][2]int) : phood =
+  (arr[0,0], arr[0,1], arr[1,0], arr[1,1])
+
+fun array_to_phoods(arr : [w][h]int) : [][]phood =
+  let hoodsA = reshape (w/2,h/2,2,2) arr
+  in (map (fn x_r =>(map array_to_phood  x_r) ) hoodsA)
+
+fun hoods_to_array(hoods :[w][h]hood) : [][]int =
+  let hoodsA =  (map (fn x_r =>(map hood_to_array  x_r) ) hoods)
+  in reshape (w*2,h*2) hoodsA
+
+
+
+fun hoodPress_old(hood1 : phood) (hood2 : phood) : phood =
   let (_, _, dl1 , dr1) = hood1
   let (ul2, ur2, dl2, dr2) = hood2
   let ul = if ul2 == 0 || (isWallInt dl1 && isWallInt ul2)  then 0 else
@@ -102,11 +120,16 @@ fun hoodPress(hood1 : phood) (hood2 : phood) : phood =
   in (ul, ur, dl, dr)
 
 
-fun cpressure(hoodsc : [h]phood) : [h]phood =
-  scan hoodPress emptyPHood hoodsc
+fun array_pressure(e1 :int) (e2 : int) : int =
+  if e2 == 0 || (isWallInt e1 && isWallInt e2) then 0 else
+   if isWallInt e1 then e2 else if isWallInt e2 then e1 else e1 + e2
 
-fun hood_pressure (hoods: [w][h]phood) : [w][h]phood =
-  map (fn x => cpressure x)  hoods
+fun cpressure(hoodsc : [h]int) : [h]int =
+  scan array_pressure 0 hoodsc
+
+fun hood_pressure (hoods: [][]int) : [][]phood =
+  let pres = map (fn x => cpressure x)  hoods
+  in  array_to_phoods pres
 
 fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
   (map (fn x_r => map inthood  x_r ) hoods)
@@ -121,8 +144,8 @@ fun wall_thickness (hoods: [w][h]phood) : [w][h]phood =
 -- Compute interactions and aging for every hood, returning a new
 -- array of hoods.
 fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
-  let phoods = hoods_to_phoods hoods
-  let hoodsPress = hood_pressure phoods
+  let int_hoods_array = hoods_to_array hoods
+  let hoodsPress = hood_pressure int_hoods_array
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
                  randomish hoods hoodsPress
