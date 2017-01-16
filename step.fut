@@ -9,7 +9,10 @@ type marg_pos = int
 -- it is more gangsta.
 type hood = (u8,u8,u8,u8)
 
-type phood =(int,int,int,int)
+
+type phood =((int,bool),(int,bool),(int,bool),(int,bool))
+
+type inthood =(int,int,int,int)
 
 -- The following two functions should be used for all hood
 -- interaction.  Never just pattern patch directly on the value!
@@ -17,11 +20,27 @@ type phood =(int,int,int,int)
 fun hoodQuadrants ((ul,ur,dl,dr): hood): (element, element, element, element) =
   (ul,ur,dl,dr)
 
-fun PhoodQuadrants ((ul,ur,dl,dr): phood): (int, int, int, int) =
+fun PhoodQuadrants ((ul,ur,dl,dr): phood): ((int,bool), (int,bool), (int,bool), (int,bool)) =
+  (ul,ur,dl,dr)
+
+fun InthoodQuadrants ((ul,ur,dl,dr): inthood): (int,int,int,int) =
   (ul,ur,dl,dr)
 
 fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): hood =
   (ul,ur,dl,dr)
+
+
+fun wall_val(e :int) : int =
+  if isWallInt e then e else e
+
+
+fun hood_to_phood(hood : hood): phood =
+  let (ul, ur, dl, dr ) = hood
+  in ((wall_val (int ul), isWall ul), (wall_val (int ur), isWall ur), (wall_val (int dl), isWall dl),(wall_val (int dr), isWall dr))
+
+fun phood_to_inthood(hood : phood): inthood =
+  let ((ul,_), (ur,_), (dl,_), (dr,_) ) = hood
+  in (ul, ur, dl, dr)
 
 -- Return the requested quadrant from the given hood.
 fun hoodQuadrant (h: hood) (i: marg_pos): element =
@@ -76,40 +95,37 @@ val emptyHood : hood =
     (u8(0),u8(0),u8(0),u8(0))
 
 val emptyPHood : phood =
-    inthood emptyHood
+    hood_to_phood emptyHood
 
+fun press_func(e1: int, isWall1 : bool) (e2:int, isWall2 :bool) : (int,bool) =
+  if isWall1 then (e2, isWall2) else
+   if isWall2 then (e1,false) else
+      if e2 == 0 then (0,false) else (e1 + e2, false)
 
-fun inthood (hood:hood) : phood =
-  let (ul,ur, dl , dr) = hood
-  in
-  (int(ul),int(ur),int(dl),int(dr))
-
-fun hoodPress(hood1 : phood) (hood2 : phood) : phood =
+fun hoods_press(hood1 : phood) (hood2 : phood): phood =
   let (_, _, dl1 , dr1) = hood1
-  let (ul2, ur2, dl2, dr2) = hood2
-  let ul = if ul2 == 0 || (isWallInt dl1 && isWallInt ul2)  then 0 else
-    if isWallInt dl1 then  dl1 + ul2 else if isWallInt ul2  then dl1 else dl1 + ul2
+  let (ul2, ur2, dl2 , dr2) = hood2
+  in (press_func dl1 ul2, press_func dr1 ur2, press_func dl1 dl2, press_func dr1 dr2)
 
-  let ur = if ul2 == 0 || (isWallInt dr1 && isWallInt ur2)  then 0 else
-    if isWallInt dr1 then  dr1 + ur2 else if isWallInt ur2  then dr1 else dr1 + ur2
 
-  let dl = if dl2 == 0 || (isWallInt ul2 && isWallInt dl2) then 0 else
-    if isWallInt ul2 then  dl2 else if isWallInt dl2 then ul2 else dl1+ul2+dl2
-
-  let dr = if dr2 == 0 || (isWallInt ur2 && isWallInt dr2) then 0 else
-    if isWallInt ur2 then  dr2 else if isWallInt dr2 then ur2 else dr1+ur2+dr2
-
-  in (ul, ur, dl, dr)
+fun hoodPress(hood1 : phood) : phood =
+  let (ul, ur, dl , dr) = hood1
+  in (ul, ur, press_func ul dl, press_func ur dr)
 
 
 fun cpressure(hoodsc : [h]phood) : [h]phood =
-  scan hoodPress emptyPHood hoodsc
+  let chood = (map (fn x_r => hoodPress x_r ) hoodsc)
+  in scan hoods_press emptyPHood chood
 
-fun hood_pressure (hoods: [w][h]phood) : [w][h]phood =
-  map (fn x => cpressure x)  hoods
+fun hood_pressure (hoods: [w][h]phood) : [w][h]inthood =
+  let press_hood =  map (fn x => cpressure x)  hoods
+  in phoods_to_inthoods press_hood
+
+fun phoods_to_inthoods(phoods: [w][h]phood) : [w][h]inthood =
+  (map (fn x_r => map phood_to_inthood  x_r ) phoods)
 
 fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
-  (map (fn x_r => map inthood  x_r ) hoods)
+  (map (fn x_r => map hood_to_phood  x_r ) hoods)
 
 -- An array with a "random" number for every hood.
 fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]int =
@@ -142,13 +158,13 @@ fun ageHood (seed: int) (h: hood): hood =
 
 
 
-fun interactions (r: int) (h: hood) (p: phood): hood =
+fun interactions (r: int) (h: hood) (p: inthood): hood =
   let h' = pressure h p
   in alchemy r h'
 
-fun pressure (h: hood) (p: phood): hood =
-  let (ul0, ur0, dl0, dr0) = hoodQuadrants h  in
-  let (pul, pur, pdl, pdr) = PhoodQuadrants p  in
+fun pressure (h: hood) (p: inthood): hood =
+  let (ul0, ur0, dl0, dr0) =  hoodQuadrants h
+  let (pul, pur, pdl, pdr) =  InthoodQuadrants p
   let ul = apply_pressure ul0 pul
   let ur = apply_pressure ur0 pur
   let dr = apply_pressure dr0 pdr
