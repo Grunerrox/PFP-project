@@ -42,6 +42,10 @@ fun phood_to_inthood(hood : phood): inthood =
   let ((ul,_), (ur,_), (dl,_), (dr,_) ) = hood
   in (ul, ur, dl, dr)
 
+fun hood_to_inthood(hood : hood): inthood =
+  let (ul, ur, dl, dr ) = hood
+  in ((int ul), (int ur), (int dl), (int dr))
+
 -- Return the requested quadrant from the given hood.
 fun hoodQuadrant (h: hood) (i: marg_pos): element =
   let (ul0, ur0, dl0, dr0) = hoodQuadrants h in
@@ -127,13 +131,35 @@ fun phoods_to_inthoods(phoods: [w][h]phood) : [w][h]inthood =
 fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
   (map (fn x_r => map hood_to_phood  x_r ) hoods)
 
+fun hoods_to_inthoods(hoods: [w][h]hood) : [w][h]inthood =
+  (map (fn x_r => map hood_to_inthood  x_r ) hoods)
+
 -- An array with a "random" number for every hood.
 fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]int =
   reshape (w,h)
   (map (fn i => (hash (gen ^ i*4)) % (upper-lower+1) + lower) (iota (w*h)))
 
-fun wall_thickness (hoods: [w][h]phood) : [w][h]phood =
-  hoods
+
+-- Apply thickness
+fun thickness_func(e1: u8, isWall1 : bool) (e2: u8, isWall2 : bool) : u8 =
+  if isWall1 e1 then e1 else
+   if isWall e2 then (e1 + e2) else 0
+
+fun hoodThickness (hood : phood) : phood =
+  let (ul,ur,dl,dr) = hood
+  in (thickness_func ul, thickness_func ur, thickness_func dl, thickness_func dr)
+
+fun cthickness (hoods: [h]phood) : [h]phood =
+  let chood = (map (fn x_r => hoodThickness x_r ) hoods)
+  let flipped_hood = chood[::-1]
+  in scan hoods_thickness emptyPHood flipped_hood
+
+fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
+  let thick_hood = (map (fn x => cthickness x ) hoods)
+  in phoods_to_inthoods thick_hood
+
+
+
 -- Compute interactions and aging for every hood, returning a new
 -- array of hoods.
 fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
