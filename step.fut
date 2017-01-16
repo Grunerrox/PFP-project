@@ -31,7 +31,7 @@ fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): h
 
 
 fun wall_val(e :int) : int =
-  if isWallInt e then e else e
+  if isWallInt e then 0 else e
 
 
 fun hood_to_phood(hood : hood): phood =
@@ -99,7 +99,7 @@ val emptyPHood : phood =
 
 fun press_func(e1: int, isWall1 : bool) (e2:int, isWall2 :bool) : (int,bool) =
   if isWall1 then (e2, isWall2) else
-   if isWall2 then (e1,false) else
+   if isWall2 then (e1 + e2,true) else
       if e2 == 0 then (0,false) else (e1 + e2, false)
 
 fun hoods_press(hood1 : phood) (hood2 : phood): phood =
