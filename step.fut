@@ -3,16 +3,16 @@ include alchemy
 include pressure
 
 -- Position in a Margolus neighborhood; ranges from 0-3.
-type marg_pos = int
+type marg_pos = i32
 
 -- A Margolus neighborhood.  We will just call these 'hood's, because
 -- it is more gangsta.
 type hood = (u8,u8,u8,u8)
 
 
-type phood =((int,bool),(int,bool),(int,bool),(int,bool))
+type phood = ((i32,bool),(i32,bool),(i32,bool),(i32,bool))
 
-type inthood =(int,int,int,int)
+type inthood = (i32,i32,i32,i32)
 
 -- The following two functions should be used for all hood
 -- interaction.  Never just pattern patch directly on the value!
@@ -20,31 +20,31 @@ type inthood =(int,int,int,int)
 fun hoodQuadrants ((ul,ur,dl,dr): hood): (element, element, element, element) =
   (ul,ur,dl,dr)
 
-fun PhoodQuadrants ((ul,ur,dl,dr): phood): ((int,bool), (int,bool), (int,bool), (int,bool)) =
+fun PhoodQuadrants ((ul,ur,dl,dr): phood): ((i32,bool), (i32,bool), (i32,bool), (i32,bool)) =
   (ul,ur,dl,dr)
 
-fun InthoodQuadrants ((ul,ur,dl,dr): inthood): (int,int,int,int) =
+fun InthoodQuadrants ((ul,ur,dl,dr): inthood): (i32,i32,i32,int) =
   (ul,ur,dl,dr)
 
 fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): hood =
   (ul,ur,dl,dr)
 
 
-fun wall_val(e :int) : int =
-  if isWallInt e then 0 else e
+fun wall_val(e :i32) : i32 =
+  if isWallI32 e then 0 else e
 
 
 fun hood_to_phood(hood : hood): phood =
   let (ul, ur, dl, dr ) = hood
-  in ((wall_val (int ul), isWall ul), (wall_val (int ur), isWall ur), (wall_val (int dl), isWall dl),(wall_val (int dr), isWall dr))
+  in ((wall_val (i32 ul), isWall ul), (wall_val (i32 ur), isWall ur), (wall_val (i32 dl), isWall dl),(wall_val (i32 dr), isWall dr))
 
 fun phood_to_inthood(hood : phood): inthood =
-  let ((ul,_), (ur,_), (dl,_), (dr,_) ) = hood
+  let ( (ul,_), (ur,_), (dl,_), (dr,_) ) = hood
   in (ul, ur, dl, dr)
 
 fun hood_to_inthood(hood : hood): inthood =
   let (ul, ur, dl, dr ) = hood
-  in ((int ul), (int ur), (int dl), (int dr))
+  in ((i32 ul), (i32 ur), (i32 dl), (i32 dr))
 
 -- Return the requested quadrant from the given hood.
 fun hoodQuadrant (h: hood) (i: marg_pos): element =
@@ -73,13 +73,13 @@ fun permuteHoodQuadrants (h: hood) ((ul,ur,dl,dr): (marg_pos, marg_pos, marg_pos
   hoodFromQuadrants (hoodQuadrant h ul) (hoodQuadrant h ur)
                     (hoodQuadrant h dl) (hoodQuadrant h dr)
 
-fun indexToHood (offset: int) (i: int): (int, int) =
+fun indexToHood (offset: i32) (i: i32): (i32, i32) =
   if offset == 0 then (i / 2, i % 2)
   else ((i+1) / 2, (i+1) % 2)
 
 -- Given a hood array at offset -1 or 0, return the element at index
 -- (x,y).  Out-of-bounds returns 'nothing'.
-fun hoodArrayIndex (offset: int) (elems: [w][h]hood) ((x,y): (int,int)): element =
+fun hoodArrayIndex (offset: i32) (elems: [w][h]hood) ((x,y): (i32,i32)): element =
   -- First, figure out which hood (x,y) is in.
   let (hx,ix) = indexToHood offset x
   let (hy,iy) = indexToHood offset y
@@ -90,7 +90,7 @@ fun hoodArrayIndex (offset: int) (elems: [w][h]hood) ((x,y): (int,int)): element
      else hoodQuadrant (unsafe elems[hx,hy]) (ix+iy*2)
 
 -- From http://stackoverflow.com/a/12996028
-fun hash(x: int): int =
+fun hash(x: i32): i32 =
   let x = ((x >> 16) ^ x) * 0x45d9f3b
   let x = ((x >> 16) ^ x) * 0x45d9f3b
   let x = ((x >> 16) ^ x) in
@@ -101,7 +101,7 @@ val emptyHood : hood =
 val emptyPHood : phood =
     hood_to_phood emptyHood
 
-fun press_func(e1: int, isWall1 : bool) (e2:int, isWall2 :bool) : (int,bool) =
+fun press_func(e1: i32, isWall1 : bool) (e2:i32, isWall2 :bool) : (i32,bool) =
   if isWall1 then (e2, isWall2) else
    if isWall2 then (e1 + e2,true) else
       if e2 == 0 then (0,false) else (e1 + e2, false)
@@ -131,50 +131,56 @@ fun phoods_to_inthoods(phoods: [w][h]phood) : [w][h]inthood =
 fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
   (map (fn x_r => map hood_to_phood  x_r ) hoods)
 
-fun hoods_to_inthoods(hoods: [w][h]hood) : [w][h]inthood =
-  (map (fn x_r => map hood_to_inthood  x_r ) hoods)
+-- fun hoods_to_inthoods(hoods: [w][h]hood) : [w][h]inthood =
+--   (map (fn x_r => map hood_to_inthood  x_r ) hoods)
 
 -- An array with a "random" number for every hood.
-fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]int =
+fun hoodRandoms ((w,h): (i32,i32)) ((lower,upper): (i32,i32)) (gen: i32): [w][h]i32 =
   reshape (w,h)
   (map (fn i => (hash (gen ^ i*4)) % (upper-lower+1) + lower) (iota (w*h)))
 
 
 -- Apply thickness
-fun thickness_func(e1: u8, isWall1 : bool) (e2: u8, isWall2 : bool) : u8 =
-  if isWall1 e1 then e1 else
-   if isWall e2 then (e1 + e2) else 0
+fun thickness_func(e1: i32, isWall1 : bool) (e2: i32, isWall2 : bool) : (i32, bool) =
+  if isWall1 e1 then (e1,true) else
+   if isWall e2 then (e1 + e2,true) else (0,false)
 
-fun hoodThickness (hood : phood) : phood =
+fun wall_thick(hood1 : phood) (hood2 : phood): phood =
+  let (ul1,ur1,dl1,dr1) = hood1
+  let (ul2,ur2,dl2,dr2) = hood2
+  -- since hoods arent flipped we need to call them opposite.
+  in (thickness_func ul1 dl2, thickness_func ur1 dr2, thickness_func ul1 dl2, thickness ur1 ur2)
+
+fun wallThickness (hood : phood) : phood =
   let (ul,ur,dl,dr) = hood
-  in (thickness_func ul, thickness_func ur, thickness_func dl, thickness_func dr)
+  in (ul, ur, thickness_func ul dl, thickness_func ur dr)
 
 fun cthickness (hoods: [h]phood) : [h]phood =
-  let chood = (map (fn x_r => hoodThickness x_r ) hoods)
+  let chood = (map (fn x_r => wallThickness x_r ) hoods)
   let flipped_hood = chood[::-1]
-  in scan hoods_thickness emptyPHood flipped_hood
+  in scan wall_thick emptyPHood flipped_hood
 
 fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
   let thick_hood = (map (fn x => cthickness x ) hoods)
-  in phoods_to_inthoods thick_hood
+  in phoods_to_inthoods thick_hoods
 
 
 
 -- Compute interactions and aging for every hood, returning a new
 -- array of hoods.
-fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
+fun step (gen: i32) (hoods: [w][h]hood) : [w][h]hood =
   let phoods = hoods_to_phoods hoods
   let hoodsPress = hood_pressure phoods
   let thickness = wall_thickness phoods
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
-                 randomish hoods hoodsPress -- thickness
+                 randomish hoods hoodsPress --thickness
   in map (fn r0 r1 => map ageHood r0 r1) randomish
      (map (fn r => map gravity r) envs)
 
 -- Age every cell within a hood.  We use our (single) random number to
 -- generate four new random numbers,which are then used for the aging.
-fun ageHood (seed: int) (h: hood): hood =
+fun ageHood (seed: i32) (h: hood): hood =
   let (ul, ur, dl, dr) = hoodQuadrants h in
   hoodFromQuadrants (age (hash (seed^0) % 100) ul)
                     (age (hash (seed^1) % 100) ur)
@@ -184,7 +190,7 @@ fun ageHood (seed: int) (h: hood): hood =
 
 
 
-fun interactions (r: int) (h: hood) (p: inthood): hood =
+fun interactions (r: i32) (h: hood) (p: inthood): hood =
   let h' = pressure h p
   in alchemy r h'
 
@@ -199,7 +205,7 @@ fun pressure (h: hood) (p: inthood): hood =
 
 
 -- Apply alchemy within a hood.
-fun alchemy (r: int) (h: hood): hood =
+fun alchemy (r: i32) (h: hood): hood =
   let (ul0, ur0, dl0, dr0) = hoodQuadrants h  in
   if ul0 == ur0 && ur0 == dl0 && dl0 == dr0
   then h

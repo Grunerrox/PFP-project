@@ -39,7 +39,7 @@ val elems: []element = [ nothing
                        , lava
                        , turnip ]
 
-val num_elems: int = (shape(elems))[0]
+val num_elems: i32 = (shape(elems))[0]
 
 fun isWall (x: element): bool =
   x == torch || x == plant || x == spout || x == metal || x == wall
