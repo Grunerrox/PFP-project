@@ -142,23 +142,31 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 -- Apply thickness
 fun thickness_func(e1: int, isWall1 : bool) (e2: int, isWall2 : bool) : (int, bool) =
-  if isWall1 then (e1,true) else
-   if isWall2 then (e1 + e2,true) else (0,false)
+  if isWall1 && isWall2
+  then (e1+e2,true)
+  else if isWall1
+  then (e1,true)
+  else if isWall2
+  then (e2, false)
+  else (0, false)
 
+-- used in scan
 fun wall_thick(hood1 : phood) (hood2 : phood): phood =
-  let (ul1,ur1,dl1,dr1) = hood1
+  let (ul1,ur1,_,_) = hood1
   let (ul2,ur2,dl2,dr2) = hood2
   -- since hoods arent flipped we need to call them opposite.
-  in (thickness_func ul1 dl2, thickness_func ur1 dr2, thickness_func ul1 dl2, thickness_func ur1 ur2)
+  in (thickness_func ul1 ul2, thickness_func ur1 ur2, thickness_func ul1 dl2, thickness_func ur1 dr2)
 
+-- used in map
 fun wallThickness (hood : phood) : phood =
   let (ul,ur,dl,dr) = hood
-  in (ul, ur, thickness_func ul dl, thickness_func ur dr)
+  in (thickness_func ul dl, thickness_func ur dr, dl, dr)
 
 fun cthickness (hoods: [h]phood) : [h]phood =
   let chood = (map (fn x_r => wallThickness x_r ) hoods)
   let flipped_hood = chood[::-1]
-  in scan wall_thick emptyPHood flipped_hood
+  let scRes = scan wall_thick emptyPHood flipped_hood
+  in scRes[::-1]
 
 fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
   let thick_hoods = (map (fn x => cthickness x ) hoods)
@@ -173,8 +181,8 @@ fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
   let hoodsPress = hood_pressure phoods
   let thickness = wall_thickness phoods
   let randomish = hoodRandoms (w,h) (0,100) gen
-  let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
-                 randomish hoods hoodsPress --thickness
+  let envs = map (fn randomish_r hoods_r hood_p hood_t => map interactions randomish_r hoods_r hood_p hood_t)
+                 randomish hoods hoodsPress thickness
   in map (fn r0 r1 => map ageHood r0 r1) randomish
      (map (fn r => map gravity r) envs)
 
@@ -190,17 +198,18 @@ fun ageHood (seed: int) (h: hood): hood =
 
 
 
-fun interactions (r: int) (h: hood) (p: inthood): hood =
-  let h' = pressure h p
+fun interactions (r: int) (h: hood) (p: inthood) (t: inthood): hood =
+  let h' = pressure h p t
   in alchemy r h'
 
-fun pressure (h: hood) (p: inthood): hood =
+fun pressure (h: hood) (p: inthood) (t: inthood): hood =
   let (ul0, ur0, dl0, dr0) =  hoodQuadrants h
   let (pul, pur, pdl, pdr) =  InthoodQuadrants p
-  let ul = apply_pressure ul0 pul
-  let ur = apply_pressure ur0 pur
-  let dr = apply_pressure dr0 pdr
-  let dl = apply_pressure dl0 pdl
+  let (tul, tur, tdl, tdr) =  InthoodQuadrants t
+  let ul = apply_pressure ul0 pul tul
+  let ur = apply_pressure ur0 pur tur
+  let dr = apply_pressure dr0 pdr tdr
+  let dl = apply_pressure dl0 pdl tdl
   in hoodFromQuadrants ul ur dl dr
 
 
