@@ -1,0 +1,59 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{fancyhdr}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{icomma}
+\usepackage[final]{pdfpages}
+\setcounter{secnumdepth}{-1}
+\usepackage{amsfonts}
+\usepackage{float}
+\pagestyle{fancy}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\usepackage{alltt}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{amsmath}
+\usepackage{xr}
+\usepackage{courier}
+\usepackage{hyperref}
+\usepackage{listings}
+
+
+\begin{document}
+\pagestyle{fancy}
+\lhead{Nikolaj Friis Østergaard - ltm741\\Christian Grüner - htz154}
+\setlength{\parindent}{0pt}
+
+
+\section{1}
+
+
+\section{Approach}
+A key part of using a parallel scan is that the operator i assosiative. Since we have these hoods units, which for each column actually holds two values, we cannot just scan over them. If we did this, we would risk throwing information away, since the calculation on two hoods are based only on the lower part of the first hood and the whole second hood. The reason we cannot use both entries in the first hood, is that is would result in values being used twice.
+\\
+\\
+To solve this problem, our operator works directly on the elements. This cannot be used in the scan, since we are scanning over hoods. So we start out by mapping over the hoods in each colum, using our operator. This applies the operator to every pairs of elements in the hoods. After we have calculated the values inside the hoods, we can scan over the hoods, use the operator across hoods. This is by taking the lower part of the first hood, and applying it to the two elements in the lower hood.
+\\
+\\
+This method of first mapping, to calculate inner result, then scanning to get the results between elements, is a general approach. That works for all assosiative operators.
+\\
+\\
+We calculate the pressure
+
+\section{Proof of assosiativity}
+
+First we prove that the map scan method actually is assosiative, given a operator that is assosiative.
+\\
+\\
+Then we show our operator is assosiative
+
+TODO PICTURES
+
+
+
+\end{document}
