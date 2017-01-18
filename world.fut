@@ -1,6 +1,7 @@
 type element = u8
 type weight = u8
 type weight_env = u8
+type int = i32
 
 val nothing: element = 0u8
 val steam_water: element = 1u8

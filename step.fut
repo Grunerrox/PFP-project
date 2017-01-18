@@ -10,9 +10,9 @@ type marg_pos = int
 type hood = (u8,u8,u8,u8)
 
 
-type phood =((int,bool),(int,bool),(int,bool),(int,bool))
+type phood = ((int,bool),(int,bool),(int,bool),(int,bool))
 
-type inthood =(int,int,int,int)
+type inthood = (int,int,int,int)
 
 -- The following two functions should be used for all hood
 -- interaction.  Never just pattern patch directly on the value!
@@ -31,7 +31,7 @@ fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): h
 
 
 fun wall_val(e :int) : int =
-  if isWallInt e then 0 else e
+  if isWallINT e then 0 else e
 
 
 fun hood_to_phood(hood : hood): phood =
@@ -39,7 +39,7 @@ fun hood_to_phood(hood : hood): phood =
   in ((wall_val (int ul), isWall ul), (wall_val (int ur), isWall ur), (wall_val (int dl), isWall dl),(wall_val (int dr), isWall dr))
 
 fun phood_to_inthood(hood : phood): inthood =
-  let ((ul,_), (ur,_), (dl,_), (dr,_) ) = hood
+  let ( (ul,_), (ur,_), (dl,_), (dr,_) ) = hood
   in (ul, ur, dl, dr)
 
 fun hood_to_inthood(hood : hood): inthood =
@@ -131,8 +131,8 @@ fun phoods_to_inthoods(phoods: [w][h]phood) : [w][h]inthood =
 fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
   (map (fn x_r => map hood_to_phood  x_r ) hoods)
 
-fun hoods_to_inthoods(hoods: [w][h]hood) : [w][h]inthood =
-  (map (fn x_r => map hood_to_inthood  x_r ) hoods)
+-- fun hoods_to_inthoods(hoods: [w][h]hood) : [w][h]inthood =
+--   (map (fn x_r => map hood_to_inthood  x_r ) hoods)
 
 -- An array with a "random" number for every hood.
 fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]int =
@@ -141,22 +141,28 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 
 -- Apply thickness
-fun thickness_func(e1: u8, isWall1 : bool) (e2: u8, isWall2 : bool) : u8 =
-  if isWall1 e1 then e1 else
-   if isWall e2 then (e1 + e2) else 0
+fun thickness_func(e1: int, isWall1 : bool) (e2: int, isWall2 : bool) : (int, bool) =
+  if isWall1 e1 then (e1,true) else
+   if isWall e2 then (e1 + e2,true) else (0,false)
 
-fun hoodThickness (hood : phood) : phood =
+fun wall_thick(hood1 : phood) (hood2 : phood): phood =
+  let (ul1,ur1,dl1,dr1) = hood1
+  let (ul2,ur2,dl2,dr2) = hood2
+  -- since hoods arent flipped we need to call them opposite.
+  in (thickness_func ul1 dl2, thickness_func ur1 dr2, thickness_func ul1 dl2, thickness ur1 ur2)
+
+fun wallThickness (hood : phood) : phood =
   let (ul,ur,dl,dr) = hood
-  in (thickness_func ul, thickness_func ur, thickness_func dl, thickness_func dr)
+  in (ul, ur, thickness_func ul dl, thickness_func ur dr)
 
 fun cthickness (hoods: [h]phood) : [h]phood =
-  let chood = (map (fn x_r => hoodThickness x_r ) hoods)
+  let chood = (map (fn x_r => wallThickness x_r ) hoods)
   let flipped_hood = chood[::-1]
-  in scan hoods_thickness emptyPHood flipped_hood
+  in scan wall_thick emptyPHood flipped_hood
 
 fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
   let thick_hood = (map (fn x => cthickness x ) hoods)
-  in phoods_to_inthoods thick_hood
+  in phoods_to_inthoods thick_hoods
 
 
 
@@ -168,7 +174,7 @@ fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
   let thickness = wall_thickness phoods
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
-                 randomish hoods hoodsPress -- thickness
+                 randomish hoods hoodsPress --thickness
   in map (fn r0 r1 => map ageHood r0 r1) randomish
      (map (fn r => map gravity r) envs)
 
