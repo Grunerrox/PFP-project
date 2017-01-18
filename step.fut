@@ -31,12 +31,12 @@ fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): h
 
 
 fun wall_val(e :int) : int =
-  if isWallINT e then 0 else e
+  if isWallInt e then 0 else e
 
 
 fun hood_to_phood(hood : hood): phood =
   let (ul, ur, dl, dr ) = hood
-  in ((wall_val (int ul), isWall ul), (wall_val (int ur), isWall ur), (wall_val (int dl), isWall dl),(wall_val (int dr), isWall dr))
+  in ((wall_val (i32 ul), isWall ul), (wall_val (i32 ur), isWall ur), (wall_val (i32 dl), isWall dl),(wall_val (i32 dr), isWall dr))
 
 fun phood_to_inthood(hood : phood): inthood =
   let ( (ul,_), (ur,_), (dl,_), (dr,_) ) = hood
@@ -44,7 +44,7 @@ fun phood_to_inthood(hood : phood): inthood =
 
 fun hood_to_inthood(hood : hood): inthood =
   let (ul, ur, dl, dr ) = hood
-  in ((int ul), (int ur), (int dl), (int dr))
+  in ((i32 ul), (i32 ur), (i32 dl), (i32 dr))
 
 -- Return the requested quadrant from the given hood.
 fun hoodQuadrant (h: hood) (i: marg_pos): element =
@@ -142,14 +142,14 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 -- Apply thickness
 fun thickness_func(e1: int, isWall1 : bool) (e2: int, isWall2 : bool) : (int, bool) =
-  if isWall1 e1 then (e1,true) else
-   if isWall e2 then (e1 + e2,true) else (0,false)
+  if isWall1 then (e1,true) else
+   if isWall2 then (e1 + e2,true) else (0,false)
 
 fun wall_thick(hood1 : phood) (hood2 : phood): phood =
   let (ul1,ur1,dl1,dr1) = hood1
   let (ul2,ur2,dl2,dr2) = hood2
   -- since hoods arent flipped we need to call them opposite.
-  in (thickness_func ul1 dl2, thickness_func ur1 dr2, thickness_func ul1 dl2, thickness ur1 ur2)
+  in (thickness_func ul1 dl2, thickness_func ur1 dr2, thickness_func ul1 dl2, thickness_func ur1 ur2)
 
 fun wallThickness (hood : phood) : phood =
   let (ul,ur,dl,dr) = hood
@@ -161,7 +161,7 @@ fun cthickness (hoods: [h]phood) : [h]phood =
   in scan wall_thick emptyPHood flipped_hood
 
 fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
-  let thick_hood = (map (fn x => cthickness x ) hoods)
+  let thick_hoods = (map (fn x => cthickness x ) hoods)
   in phoods_to_inthoods thick_hoods
 
 
@@ -227,9 +227,9 @@ fun gravity (h: hood): hood =
     if ((isFluid dl && dr == nothing) || (isFluid dr && dl == nothing)) &&
        isFluid ul && isFluid ur
     then (ul, ur, dr, dl)
-    else if isFluid ul && weight ur < weight ul && dl != nothing && dr != nothing && ! isWall dl && ! isWall dr
+    else if isFluid ul && weight ur < weight ul && dl != nothing && dr != nothing && ! (isWall dl) && ! (isWall dr)
     then (ur, ul, dl, dr)
-    else if isFluid ur && weight ul < weight ur && dl != nothing && dr != nothing && ! isWall dl && ! isWall dr
+    else if isFluid ur && weight ul < weight ur && dl != nothing && dr != nothing && ! (isWall dl) && ! (isWall dr)
     then (ur, ul, dr, dl)
     else if isFluid dl && weight ul < weight dl && weight ur < weight dl && weight dr < weight dl
     then (ul, ur, dr, dl)
