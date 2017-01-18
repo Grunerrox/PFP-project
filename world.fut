@@ -1,6 +1,7 @@
 type element = u8
 type weight = u8
 type weight_env = u8
+type int = i32
 
 val nothing: element = 0u8
 val steam_water: element = 1u8
@@ -39,7 +40,7 @@ val elems: []element = [ nothing
                        , lava
                        , turnip ]
 
-val num_elems: i32 = (shape(elems))[0]
+val num_elems: int = (shape(elems))[0]
 
 fun isWall (x: element): bool =
   x == torch || x == plant || x == spout || x == metal || x == wall
