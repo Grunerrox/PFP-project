@@ -158,14 +158,14 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 -- Apply thickness
 
-fun thickness_func(e1: int, isWall1 : bool) (e2: int, isWall2 : bool) : (int, bool) =
+fun thickness_func(e1: int, isWall1 : bool, wallAbove1 : bool) (e2: int, isWall2 : bool, wallAbove2 : bool) : (int, bool, bool) =
   if isWall1 && isWall2
-  then (e1+e2,true)
+  then (e1+e2,true,false)
   else if isWall1
-  then (e1,true)
+  then (e1,true,false)
   else if isWall2
-  then (e2, false)
-  else (0, false)
+  then (e2, false,false)
+  else (0, false,false)
 
 -- used in scan
 fun wall_thick(hood1 : phood) (hood2 : phood): phood =
@@ -183,8 +183,8 @@ fun wallThickness (hood : phood) : phood =
 fun cthickness (hoods: [h]phood) : [h]phood =
   let chood = (map (fn x_r => wallThickness x_r ) hoods)
   let flipped_hood = chood[::-1]
-  let scRes = scan wall_thick emptyPHood flipped_hood
-  in scRes[::-1]
+  let scRes = scan wall_thick emptyPHood chood
+  in scRes --scRes[::-1]
 
 fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
   let thick_hoods = (map (fn x => cthickness x ) hoods)
@@ -192,9 +192,6 @@ fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
 
 
 
-fun hood_step (hoods: [][]hood) : [][]hood =
-  let phoods = hoods_to_phoods hoods
-  in inthoods_to_hoods ( hood_pressure phoods)
 
 
 -- Compute interactions and aging for every hood, returning a new

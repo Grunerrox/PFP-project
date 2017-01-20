@@ -193,10 +193,8 @@ entry element_at (gen: int, hoods: [w][h]packed_hood, _: int, _: int) (x: int, y
   in packedWorldIndex offset hoods (x,y)
 
 
-entry test_assoc(e1: int, isWall1 : bool, isWallAbove1: bool) (e2:int, isWall2 :bool, isWallAbove2 : bool) : (int,bool,bool) =
+entry test_assoc_pres(e1: int, isWall1 : bool, isWallAbove1: bool) (e2:int, isWall2 :bool, isWallAbove2 : bool) : (int,bool,bool) =
   press_func (e1,isWall1,isWallAbove1) (e2, isWall2, isWallAbove2)
 
-entry press_world(gen: int, hoods: [w][h]packed_hood, ww: int, wh: int) :(int, [w][h]packed_hood,int, int)=
-  let hoods' = (shiftHoods (gen%2) hoods)
-  let hoods'' = hood_step hoods'
-  in (gen, packWorld hoods'',ww,wh)
+entry test_assoc_thick(e1: int, isWall1 : bool, isWallAbove1: bool) (e2:int, isWall2 :bool, isWallAbove2 : bool) : (int,bool,bool) =
+  thickness_func (e1,isWall1,isWallAbove1) (e2, isWall2, isWallAbove2)
