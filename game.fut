@@ -110,7 +110,7 @@ fun elemColour (x: element): int =
   then mix_colours (f32 (x - fire))
                    (f32 (fire_end - x))
                    red yellow
-  else black -- handles 'nothing'
+   else black -- handles 'nothing'
 
 entry add_element(gen: int, hoods: [w][h]packed_hood, ww: int, wh: int)
                  (pos: (int,int)) (r: int) (elem: element): game_state =
@@ -191,3 +191,12 @@ entry element_name(x: element): []int =
 entry element_at (gen: int, hoods: [w][h]packed_hood, _: int, _: int) (x: int, y: int): element =
   let offset = gen % 2
   in packedWorldIndex offset hoods (x,y)
+
+
+entry test_assoc(e1: int, isWall1 : bool, isWallAbove1: bool) (e2:int, isWall2 :bool, isWallAbove2 : bool) : (int,bool,bool) =
+  press_func (e1,isWall1,isWallAbove1) (e2, isWall2, isWallAbove2)
+
+entry press_world(gen: int, hoods: [w][h]packed_hood, ww: int, wh: int) :(int, [w][h]packed_hood,int, int)=
+  let hoods' = (shiftHoods (gen%2) hoods)
+  let hoods'' = hood_step hoods'
+  in (gen, packWorld hoods'',ww,wh)

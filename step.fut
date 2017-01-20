@@ -10,7 +10,7 @@ type marg_pos = int
 type hood = (u8,u8,u8,u8)
 
 
-type phood = ((int,bool),(int,bool),(int,bool),(int,bool))
+type phood = ((int,bool,bool),(int,bool,bool),(int,bool,bool),(int,bool,bool))
 
 type inthood = (int,int,int,int)
 
@@ -20,27 +20,31 @@ type inthood = (int,int,int,int)
 fun hoodQuadrants ((ul,ur,dl,dr): hood): (element, element, element, element) =
   (ul,ur,dl,dr)
 
-fun PhoodQuadrants ((ul,ur,dl,dr): phood): ((int,bool), (int,bool), (int,bool), (int,bool)) =
+fun intHoodQuadrants ((ul,ur,dl,dr): inthood): (int,int,int,int) =
   (ul,ur,dl,dr)
 
-fun InthoodQuadrants ((ul,ur,dl,dr): inthood): (int,int,int,int) =
+fun intHoodFromQuadrants (ul: int) (ur: int) (dl:int) (dr:int): inthood =
   (ul,ur,dl,dr)
+
 
 fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): hood =
   (ul,ur,dl,dr)
 
-
-fun wall_val(e :int) : int =
-  if isWallInt e then 0 else e
-
+fun isWallOrEmpty (e:u8) : bool =
+  isWall e || (e == (u8 0))
 
 fun hood_to_phood(hood : hood): phood =
   let (ul, ur, dl, dr ) = hood
-  in ((wall_val (i32 ul), isWall ul), (wall_val (i32 ur), isWall ur), (wall_val (i32 dl), isWall dl),(wall_val (i32 dr), isWall dr))
+  in ((i32 ul, isWallOrEmpty ul, false), (i32 ur, isWallOrEmpty ur, false), (i32 dl, isWallOrEmpty dl, false),(i32 dr, isWallOrEmpty dr,false))
 
 fun phood_to_inthood(hood : phood): inthood =
-  let ( (ul,_), (ur,_), (dl,_), (dr,_) ) = hood
+  let ( (ul,_,_), (ur,_,_), (dl,_,_), (dr,_,_) ) = hood
   in (ul, ur, dl, dr)
+
+fun inthood_to_hood(hood : inthood): hood =
+  let (ul, ur, dl, dr ) = hood
+  in ((u8 ul), (u8 ur), (u8 dl), (u8 dr))
+
 
 fun hood_to_inthood(hood : hood): inthood =
   let (ul, ur, dl, dr ) = hood
@@ -49,6 +53,14 @@ fun hood_to_inthood(hood : hood): inthood =
 -- Return the requested quadrant from the given hood.
 fun hoodQuadrant (h: hood) (i: marg_pos): element =
   let (ul0, ur0, dl0, dr0) = hoodQuadrants h in
+  if      i == 0 then ul0
+  else if i == 1 then ur0
+  else if i == 2 then dl0
+  else                dr0
+
+-- Return the requested quadrant from the given inthood.
+fun intHoodQuadrant (h: inthood) (i: marg_pos): int =
+  let (ul0, ur0, dl0, dr0) = intHoodQuadrants h in
   if      i == 0 then ul0
   else if i == 1 then ur0
   else if i == 2 then dl0
@@ -101,10 +113,11 @@ val emptyHood : hood =
 val emptyPHood : phood =
     hood_to_phood emptyHood
 
-fun press_func(e1: int, isWall1 : bool) (e2:int, isWall2 :bool) : (int,bool) =
-  if isWall1 then (e2, isWall2) else
-   if isWall2 then (e1 + e2,true) else
-      if e2 == 0 then (0,false) else (e1 + e2, false)
+
+fun press_func(e1: int, isWall1 : bool, wallAbove1 : bool) (e2:int, isWall2 :bool, wallAbove2 : bool) : (int,bool, bool) =
+  if wallAbove2 then (e2,isWall2, isWall1) else
+  if isWall1 || isWall2 then (e2, isWall2, true) else (e1 + e2, isWall2, false)
+
 
 fun hoods_press(hood1 : phood) (hood2 : phood): phood =
   let (_, _, dl1 , dr1) = hood1
@@ -128,6 +141,9 @@ fun hood_pressure (hoods: [w][h]phood) : [w][h]inthood =
 fun phoods_to_inthoods(phoods: [w][h]phood) : [w][h]inthood =
   (map (fn x_r => map phood_to_inthood  x_r ) phoods)
 
+fun inthoods_to_hoods(hoods: [w][h]inthood) : [w][h]hood =
+  (map (fn x_r => map inthood_to_hood  x_r ) hoods)
+
 fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
   (map (fn x_r => map hood_to_phood  x_r ) hoods)
 
@@ -141,15 +157,15 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 
 -- Apply thickness
-fun thickness_func(e1: int, isWall1 : bool) (e2: int, isWall2 : bool) : (int, bool) =
-  if isWall1 then (e1,true) else
-   if isWall2 then (e1 + e2,true) else (0,false)
+fun thickness_func(e1: int, isWall1 : bool, isWallAbove1 : bool) (e2: int, isWall2 : bool, isWallAbove2 : bool) : (int, bool,bool) =
+  if isWall1 then (e1,true,false) else
+   if isWall2 then (e1 + e2,true,false) else (0,false, false)
 
 fun wall_thick(hood1 : phood) (hood2 : phood): phood =
-  let (ul1,ur1,dl1,dr1) = hood1
+  let (ul1,ur1,_,_) = hood1
   let (ul2,ur2,dl2,dr2) = hood2
   -- since hoods arent flipped we need to call them opposite.
-  in (thickness_func ul1 dl2, thickness_func ur1 dr2, thickness_func ul1 dl2, thickness_func ur1 ur2)
+  in (thickness_func ul1 dl2, thickness_func ur1 dr2, thickness_func ul1 dl2, thickness_func ur1 dr2)
 
 fun wallThickness (hood : phood) : phood =
   let (ul,ur,dl,dr) = hood
@@ -166,17 +182,23 @@ fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
 
 
 
+fun hood_step (hoods: [][]hood) : [][]hood =
+  let phoods = hoods_to_phoods hoods
+  in inthoods_to_hoods ( hood_pressure phoods)
+
+
 -- Compute interactions and aging for every hood, returning a new
 -- array of hoods.
 fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
+  let old_gen = (gen-1)%2
   let phoods = hoods_to_phoods hoods
-  let hoodsPress = hood_pressure phoods
+  let hoodsPress = shiftPhoods old_gen (hood_pressure phoods)
   let thickness = wall_thickness phoods
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p => map interactions randomish_r hoods_r hood_p)
                  randomish hoods hoodsPress --thickness
   in map (fn r0 r1 => map ageHood r0 r1) randomish
-     (map (fn r => map gravity r) envs)
+    (map (fn r => map gravity r) envs)
 
 -- Age every cell within a hood.  We use our (single) random number to
 -- generate four new random numbers,which are then used for the aging.
@@ -196,7 +218,7 @@ fun interactions (r: int) (h: hood) (p: inthood): hood =
 
 fun pressure (h: hood) (p: inthood): hood =
   let (ul0, ur0, dl0, dr0) =  hoodQuadrants h
-  let (pul, pur, pdl, pdr) =  InthoodQuadrants p
+  let (pul, pur, pdl, pdr) =  intHoodQuadrants p
   let ul = apply_pressure ul0 pul
   let ur = apply_pressure ur0 pur
   let dr = apply_pressure dr0 pdr
@@ -249,3 +271,26 @@ fun checkIfDrop (above: element) (below: element): (element, element) =
   if isWall above || isWall below || weight below >= weight above
   then (above, below)
   else (below, above)
+
+
+-- world shifting
+fun shiftPhoods (offset: int) (hoods: [w][h]inthood): [w][h]inthood =
+  let new_offset = -1
+  in map (fn x => map (fn y =>
+            let ul = intWorldIndex offset hoods (x*2+offset+0, y*2+new_offset+0)
+            let dl = intWorldIndex offset hoods (x*2+offset+0, y*2+new_offset+1)
+            let ur = intWorldIndex offset hoods (x*2+offset+1, y*2+new_offset+0)
+            let dr = intWorldIndex offset hoods (x*2+offset+1, y*2+new_offset+1)
+            in intHoodFromQuadrants ul ur dl dr)
+            (iota h)) (iota w)
+
+
+fun intWorldIndex (offset: int) (hoods: [w][h]inthood) ((x,y): (int,int)): int =
+  -- First, figure out which hood (x,y) is in.
+  let (hx,ix) = indexToHood offset x
+  let (hy,iy) = indexToHood offset y
+
+  -- Then read if we are in-bounds.
+  in if hx < 0 || hx >= w || hy < 0 || hy >= h
+     then 0
+     else intHoodQuadrant (unsafe hoods[hx,hy]) (ix+iy*2)

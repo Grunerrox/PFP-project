@@ -29,7 +29,35 @@ def showText(what, where):
     text = font.render(what, 1, (255, 255, 255))
     screen.blit(text, where)
 
+
 beet = game.game()
+def test_assoc(beet):
+    e0 = (1,False, False)
+    ve = (0,True, False)
+
+    e1 = (3,False, False)
+
+    e2 = (4,False, False)
+
+    elms0 = [e0,ve]
+    elms1 = [e1,ve]
+    elms2 = [e2,ve]
+    for e0 in elms0:
+        for e1 in elms1:
+            for e2 in elms2:
+                res00 = beet.test_assoc(e0[0], e0[1], e0[2], e1[0],e1[1],e1[2])
+                res01 = beet.test_assoc(res00[0], res00[1], res00[2], e2[0],e2[1], e2[2])
+
+                res10 = beet.test_assoc(e1[0],e1[1], e1[2], e2[0],e2[1], e2[2])
+                res11 = beet.test_assoc(e0[0],e0[1], e0[2], res10[0],res10[1], res10[2])
+                if not res01[0] == res11[0]:
+                    print e0,e1,e2
+                    print res01
+                    print res11
+
+
+test_assoc(beet)
+#exit()
 beet_state = beet.new_game(width, height)
 
 # Initialise the list of insertable elements and their names.
@@ -52,6 +80,8 @@ modify_radius = 5
 while True:
     start = time.time()
     beet_state = beet.step_game(*beet_state)
+    pressure = beet.press_world(*beet_state)
+
     frame = beet.render(*beet_state).get()
     end = time.time()
     futhark_time = (end-start)*1000
