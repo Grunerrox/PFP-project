@@ -34,6 +34,9 @@
 
 
 \section{Approach}
+Hoods have the size 2x2. Our pressure function only works on columns, so for the sake of brevity, when describing how the pressure works, and proving the operator works, we assume hoods are 1x2, i.e. its just a column. In reality we treat a hood like two seperete columns, so assuming 1x2 is not far from the truth. This also caries on to the part about proof of assosiativity.
+\\
+\\
 A key part of using a parallel scan is that the operator i assosiative. Since we have these hoods units, which for each column actually holds two values, we cannot just scan over them. If we did this, we would risk throwing information away, since the calculation on two hoods are based only on the lower part of the first hood and the whole second hood. The reason we cannot use both entries in the first hood, is that is would result in values being used twice.
 \\
 \\
@@ -43,14 +46,38 @@ To solve this problem, our operator works directly on the elements. This cannot 
 This method of first mapping, to calculate inner result, then scanning to get the results between elements, is a general approach. That works for all assosiative operators.
 \\
 \\
-We calculate the pressure
+We calculate the pressure by using the matrial id as the pressure, and summing over them. We reset the sum when we hit a wall, or the empty element. Pressure does not go trough air, or soild walls. Walls also has a pressure value of 0.
+Before starting the calculation we transform the hoods into the type phoods.
+\\
+The phoods type is
+\begin{lstlisting}
+type phood = ((int,bool),(int,bool),(int,bool),(int,bool))
+\end{lstlisting}
+It stores the amount of presure the element adds, plus whether its a wall or not. The pressure calculation between two elements are as follows. If the first element is a wall, the result is the value of the second input element, along with its wall status. If the second element is a wall, and the first isn't the result is the pressure value of the first element plus the pressure value of the second element, and a wall status of true.
+\\
+The reason is that the first piece of wall needs to have a pressure on it, all walls beneath it, should have pressure 0. This is so the walls does not collapse all at once, but the first part is destroyed first.
+\\
+If neither element is a wall, but the second element is empty air, the result is 0 pressure, wall status false. Other wise if both elements are non empty, and non walls, the result is the sum of the elements pressure, along with wall status false.
+\\
+\\
+After the scan is done, we throw away the wall status, and just return the pressure values, packed into hoods of ints.
+
+
 
 \section{Proof of assosiativity}
 
-First we prove that the map scan method actually is assosiative, given a operator that is assosiative. Since we know that the operator is assositive, and
+
+First we prove that the map scan method actually is assosiative, given a operator that is assosiative. Since we know that the operator is assositive, applying it to all the element pairs in hoods first is fine. Now every hood has two elements the first is the original, and the last the value of the opperator applied to the two elements in the hood. In the scan part we only apply the operator between last part of the first hood, and the two elements in the second hood. But not between any element in the same hood. TODO show illustration
 \\
 \\
-Then we show our operator is assosiative
+
+
+\\
+\\
+Then we show our operator is assosiative. In the case where elements are non empty and not walls, the operator is the + operator, and we know that its assosiative.
+In the case where we
+
+
 
 TODO PICTURES
 
