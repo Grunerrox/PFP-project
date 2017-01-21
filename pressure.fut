@@ -2,7 +2,7 @@ include world
 
 
 fun apply_pressure (x: element) (p:int) (t:int) : element =
-  if x == metal && p > 200 --(200*(t+1))
+  if x == metal && p > t
   then sand
   else
   x

@@ -33,9 +33,17 @@ fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): h
 fun isWallOrEmpty (e:u8) : bool =
   isWall e || (e == (u8 0))
 
+fun wall_val (e:u8) : i32 =
+  if isWallOrEmpty e then 0 else i32 e
+
 fun hood_to_phood(hood : hood): phood =
   let (ul, ur, dl, dr ) = hood
-  in ((i32 ul, isWallOrEmpty ul, false), (i32 ur, isWallOrEmpty ur, false), (i32 dl, isWallOrEmpty dl, false),(i32 dr, isWallOrEmpty dr,false))
+  in ((wall_val ul, isWallOrEmpty ul, false), (wall_val ur, isWallOrEmpty ur, false), (wall_val dl, isWallOrEmpty dl, false),(wall_val dr, isWallOrEmpty dr,false))
+
+fun hood_to_phood_thick(hood : hood): phood =
+  let (ul, ur, dl, dr ) = hood
+  in ((i32 ul, isWall ul, false), (i32 ur, isWall ur, false), (i32 dl, isWall dl, false),(i32 dr, isWall dr,false))
+
 
 fun phood_to_inthood(hood : phood): inthood =
   let ( (ul,_,_), (ur,_,_), (dl,_,_), (dr,_,_) ) = hood
@@ -114,7 +122,7 @@ val emptyPHood : phood =
     hood_to_phood emptyHood
 
 
-fun press_func(e1: int, isWall1 : bool, wallAbove1 : bool) (e2:int, isWall2 :bool, wallAbove2 : bool) : (int,bool, bool) =
+fun press_func(e1: int, isWall1 : bool, _ : bool) (e2:int, isWall2 :bool, wallAbove2 : bool) : (int,bool, bool) =
   if wallAbove2 then (e2,isWall2, isWall1) else
   if isWall1 || isWall2 then (e2, isWall2, true) else (e1 + e2, isWall2, false)
 
@@ -134,6 +142,8 @@ fun cpressure(hoodsc : [h]phood) : [h]phood =
   let chood = (map (fn x_r => hoodPress x_r ) hoodsc)
   in scan hoods_press emptyPHood chood
 
+
+
 fun hood_pressure (hoods: [w][h]phood) : [w][h]inthood =
   let press_hood =  map (fn x => cpressure x)  hoods
   in phoods_to_inthoods press_hood
@@ -147,6 +157,9 @@ fun inthoods_to_hoods(hoods: [w][h]inthood) : [w][h]hood =
 fun hoods_to_phoods(hoods: [w][h]hood) : [w][h]phood =
   (map (fn x_r => map hood_to_phood  x_r ) hoods)
 
+fun hoods_to_phoods_thick(hoods: [w][h]hood) : [w][h]phood =
+  (map (fn x_r => map hood_to_phood_thick  x_r ) hoods)
+
 -- fun hoods_to_inthoods(hoods: [w][h]hood) : [w][h]inthood =
 --   (map (fn x_r => map hood_to_inthood  x_r ) hoods)
 
@@ -158,13 +171,11 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 -- Apply thickness
 
-fun thickness_func(e1: int, isWall1 : bool, wallAbove1 : bool) (e2: int, isWall2 : bool, wallAbove2 : bool) : (int, bool, bool) =
+fun thickness_func(e1: int, isWall1 : bool, _ : bool) (e2: int, isWall2 : bool, _ : bool) : (int, bool, bool) =
   if isWall1 && isWall2
   then (e1+e2,true,false)
-  else if isWall1
-  then (e1,true,false)
   else if isWall2
-  then (e2, false,false)
+  then (e2, true,false)
   else (0, false,false)
 
 -- used in scan
@@ -182,9 +193,9 @@ fun wallThickness (hood : phood) : phood =
 
 fun cthickness (hoods: [h]phood) : [h]phood =
   let chood = (map (fn x_r => wallThickness x_r ) hoods)
-  let flipped_hood = chood[::-1]
-  let scRes = scan wall_thick emptyPHood chood
-  in scRes --scRes[::-1]
+  let flipped_hood = map (fn i -> chood[h-i-1]) (iota h)
+  let scRes = scan wall_thick emptyPHood flipped_hood
+  in map (fn i -> scRes[h-i-1]) (iota h)
 
 fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
   let thick_hoods = (map (fn x => cthickness x ) hoods)
@@ -199,8 +210,9 @@ fun wall_thickness (hoods: [w][h]phood) : [w][h]inthood =
 fun step (gen: int) (hoods: [w][h]hood) : [w][h]hood =
   let old_gen = (gen-1)%2
   let phoods = hoods_to_phoods hoods
+  let thick_phoods = hoods_to_phoods_thick hoods
   let hoodsPress = shiftPhoods old_gen (hood_pressure phoods)
-  let thickness = wall_thickness phoods
+  let thickness = wall_thickness thick_phoods
   let randomish = hoodRandoms (w,h) (0,100) gen
   let envs = map (fn randomish_r hoods_r hood_p hood_t => map interactions randomish_r hoods_r hood_p hood_t)
                  randomish hoods hoodsPress thickness
