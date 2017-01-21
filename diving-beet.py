@@ -11,7 +11,7 @@ fullscreen = False
 if fullscreen:
     desired_size = None
 else:
-    desired_size = (1200,800)
+    desired_size = (800,600)
 
 pygame.init()
 pygame.display.set_caption('Diving Beet')
@@ -34,7 +34,6 @@ beet = game.game()
 def test_assoc(beet):
     e0 = (1,False, False)
     ve = (0,True, False)
-
     e1 = (3,False, False)
 
     e2 = (4,False, False)
@@ -47,7 +46,6 @@ def test_assoc(beet):
             for e2 in elms2:
                 pres00 = beet.test_assoc_pres(e0[0], e0[1], e0[2], e1[0],e1[1],e1[2])
                 pres01 = beet.test_assoc_pres(pres00[0], pres00[1], pres00[2], e2[0],e2[1], e2[2])
-
                 pres10 = beet.test_assoc_pres(e1[0],e1[1], e1[2], e2[0],e2[1], e2[2])
                 pres11 = beet.test_assoc_pres(e0[0],e0[1], e0[2], pres10[0],pres10[1], pres10[2])
 
@@ -56,19 +54,7 @@ def test_assoc(beet):
                     print pres01
                     print pres11
 
-                thick00 = beet.test_assoc_thick(e0[0], e0[1], e0[2], e1[0],e1[1],e1[2])
-                thick01 = beet.test_assoc_thick(thick00[0], thick00[1], thick00[2], e2[0],e2[1], e2[2])
-
-                thick10 = beet.test_assoc_thick(e1[0],e1[1], e1[2], e2[0],e2[1], e2[2])
-                thick11 = beet.test_assoc_thick(e0[0],e0[1], e0[2], thick10[0],thick10[1], thick10[2])
-
-                if not thick01[0] == thick11[0]:
-                    print e0,e1,e2
-                    print thick01
-                    print thick11
-
-
-#test_assoc(beet)
+test_assoc(beet)
 #exit()
 beet_state = beet.new_game(width, height)
 

@@ -33,16 +33,19 @@ fun hoodFromQuadrants (ul: element) (ur: element) (dl: element) (dr: element): h
 fun isWallOrEmpty (e:u8) : bool =
   isWall e || (e == (u8 0))
 
-fun wall_val (e:u8) : i32 =
+fun press_val (e:u8) : i32 =
   if isWallOrEmpty e then 0 else i32 e
+
+fun thick_val (e:u8) : i32 =
+  if isWall e then i32 e else 0
 
 fun hood_to_phood(hood : hood): phood =
   let (ul, ur, dl, dr ) = hood
-  in ((wall_val ul, isWallOrEmpty ul, false), (wall_val ur, isWallOrEmpty ur, false), (wall_val dl, isWallOrEmpty dl, false),(wall_val dr, isWallOrEmpty dr,false))
+  in ((press_val ul, isWallOrEmpty ul, false), (press_val ur, isWallOrEmpty ur, false), (press_val dl, isWallOrEmpty dl, false),(press_val dr, isWallOrEmpty dr,false))
 
 fun hood_to_phood_thick(hood : hood): phood =
   let (ul, ur, dl, dr ) = hood
-  in ((i32 ul, isWall ul, false), (i32 ur, isWall ur, false), (i32 dl, isWall dl, false),(i32 dr, isWall dr,false))
+  in ((thick_val ul, !(isWall ul), false), (thick_val ur, !(isWall ur), false), (thick_val dl, !(isWall dl), false),(thick_val dr, !(isWall dr),false))
 
 
 fun phood_to_inthood(hood : phood): inthood =
@@ -122,20 +125,20 @@ val emptyPHood : phood =
     hood_to_phood emptyHood
 
 
-fun press_func(e1: int, isWall1 : bool, _ : bool) (e2:int, isWall2 :bool, wallAbove2 : bool) : (int,bool, bool) =
-  if wallAbove2 then (e2,isWall2, isWall1) else
-  if isWall1 || isWall2 then (e2, isWall2, true) else (e1 + e2, isWall2, false)
+fun accum_func(e1: int, reset1 : bool, _ : bool) (e2:int, reset2 :bool, resetAbove2 : bool) : (int,bool, bool) =
+ if resetAbove2 then (e2, reset2, reset1) else
+   if reset1 || reset2 then (e2, reset2, true) else (e1 + e2, reset2, false)
 
 
 fun hoods_press(hood1 : phood) (hood2 : phood): phood =
   let (_, _, dl1 , dr1) = hood1
   let (ul2, ur2, dl2 , dr2) = hood2
-  in (press_func dl1 ul2, press_func dr1 ur2, press_func dl1 dl2, press_func dr1 dr2)
+  in (accum_func dl1 ul2, accum_func dr1 ur2, accum_func dl1 dl2, accum_func dr1 dr2)
 
 
 fun hoodPress(hood1 : phood) : phood =
   let (ul, ur, dl , dr) = hood1
-  in (ul, ur, press_func ul dl, press_func ur dr)
+  in (ul, ur, accum_func ul dl, accum_func ur dr)
 
 
 fun cpressure(hoodsc : [h]phood) : [h]phood =
@@ -171,7 +174,7 @@ fun hoodRandoms ((w,h): (int,int)) ((lower,upper): (int,int)) (gen: int): [w][h]
 
 -- Apply thickness
 
-fun thickness_func(e1: int, isWall1 : bool, _ : bool) (e2: int, isWall2 : bool, _ : bool) : (int, bool, bool) =
+fun thickness_func_old(e1: int, isWall1 : bool, _ : bool) (e2: int, isWall2 : bool, _ : bool) : (int, bool, bool) =
   if isWall1 && isWall2
   then (e1+e2,true,false)
   else if isWall2
@@ -183,13 +186,13 @@ fun wall_thick(hood1 : phood) (hood2 : phood): phood =
   let (ul1,ur1,_,_) = hood1
   let (ul2,ur2,dl2,dr2) = hood2
   -- since hoods arent flipped we need to call them opposite.
-  in (thickness_func ul1 ul2, thickness_func ur1 ur2, thickness_func ul1 dl2, thickness_func ur1 dr2)
+  in (accum_func ul1 ul2, accum_func ur1 ur2, accum_func ul1 dl2, accum_func ur1 dr2)
 
 
 -- used in map
 fun wallThickness (hood : phood) : phood =
   let (ul,ur,dl,dr) = hood
-  in (thickness_func ul dl, thickness_func ur dr, dl, dr)
+  in (accum_func ul dl, accum_func ur dr, dl, dr)
 
 fun cthickness (hoods: [h]phood) : [h]phood =
   let chood = (map (fn x_r => wallThickness x_r ) hoods)
