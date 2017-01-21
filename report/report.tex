@@ -30,11 +30,30 @@
 \setlength{\parindent}{0pt}
 
 
+
+\section{Problem definition}
+\if false \then  
+Brainstorm
+\else
+\textbf{Expand diving beet with a feature that runs in parallel?}\\
+What features do we want to add?\\
+How was the new feature added?\\
+Does the new feature associative?\\
+
+\section{Diving Beet}
+Diving Beet is a physics imitation that uses cellular automata to implement gravity and chemical interactions between different elements. For example water and fire gives steam, plants grow into water, stone into water gives sand, lava melts sand and metal (where metal gets melted at a slower rate).\\
+\\
+Since there hasn't been implemented a feature like pressure, we would like to add this to Diving Beet.
+This will add the feature that if there is to much pressure on a wall the wall should break.
+
 \section{1}
+Diving beet has been implemented using hoods, that has holds 4 elements in a grid. (see figure ----X---)
+
+-------Image of hoods here----------
 
 
 \section{Approach}
-A key part of using a parallel scan is that the operator i assosiative. Since we have these hoods units, which for each column actually holds two values, we cannot just scan over them. If we did this, we would risk throwing information away, since the calculation on two hoods are based only on the lower part of the first hood and the whole second hood. The reason we cannot use both entries in the first hood, is that is would result in values being used twice.
+A key part of using a parallel scan is that the operator is assosiative. Since we have these hoods units, which for each column actually holds two values, we cannot just scan over them. If we did this, we would risk throwing information away, since the calculation on two hoods are based only on the lower part of the first hood and the whole second hood. The reason we cannot use both entries in the first hood, is that is would result in values being used twice.
 \\
 \\
 To solve this problem, our operator works directly on the elements. This cannot be used in the scan, since we are scanning over hoods. So we start out by mapping over the hoods in each colum, using our operator. This applies the operator to every pairs of elements in the hoods. After we have calculated the values inside the hoods, we can scan over the hoods, use the operator across hoods. This is by taking the lower part of the first hood, and applying it to the two elements in the lower hood.
@@ -54,6 +73,9 @@ Then we show our operator is assosiative
 
 TODO PICTURES
 
+\section{Discussion}
+
+\section{Conclusion}
 
 
 \end{document}
