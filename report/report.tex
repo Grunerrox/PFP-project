@@ -22,27 +22,85 @@
 \usepackage{courier}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{tikz}
+\newcommand{\Grid}[2]{%
+  \def\maxX{#1}
+  \def\maxY{#2}
+  \begin{tikzpicture}
+    \draw[line width=1pt] (0,0) rectangle (\maxX,\maxY);
+    \foreach \x in {0,1,...,\maxX}{
+    \draw (\x,0) -- (\x,\maxY);
+    \draw[line width=2pt] (\maxX*0,0) -- (\maxX*0,\maxY);
+    \draw[line width=1pt, red] (\maxX*0.25,0) -- (\maxX*0.25,\maxY);
+    \draw[line width=2pt] (\maxX*0.50,0) -- (\maxX*0.50,\maxY);
+    \draw[line width=1pt, red] (\maxX*0.75,0) -- (\maxX*0.75,\maxY);
+    \draw[line width=2pt] (\maxX*1,0) -- (\maxX*1,\maxY);
+    }
+    %
+    \foreach \y in {0,1,...,\maxY}{
+    \draw (0,\y) -- (\maxX,\y);
+    \draw[line width=2pt] (0,\maxY*1) -- (\maxX,\maxY*1);
+    \draw[line width=1pt,red] (0,\maxY*0.25) -- (\maxX,\maxY*0.25);
+    \draw[line width=2pt] (0,\maxY*0.50) -- (\maxX,\maxY*0.50);
+    \draw[line width=1pt,red] (0,\maxY*0.75) -- (\maxX,\maxY*0.75);
+    \draw[line width=2pt] (0,\maxY*0) -- (\maxX,\maxY*0);
+    }
+  \end{tikzpicture}
+}
+\title{Parallel Functional Programming (PFP) 2016/2017\\Project: Diving Beet}
+\author{Nikolaj Friis Østergaard - ltm741\\Christian Grüner - htz154}
+\date{21-01-2017}
 
 
 \begin{document}
+\maketitle
+\newpage
 \pagestyle{fancy}
 \lhead{Nikolaj Friis Østergaard - ltm741\\Christian Grüner - htz154}
 \setlength{\parindent}{0pt}
 
 
-\section{1}
+
+\section{Problem definition}
+\if false \then
+Brainstorm
+\else
+\textbf{Expand diving beet with a feature that runs in parallel?}\\
+What features do we want to add?\\
+How was the new feature added?\\
+Is the new feature associative?\\
+
+\section{Diving Beet}
+Diving Beet is a physics imitation that uses cellular automata to implement gravity and chemical interactions between different elements. For example water and fire gives steam, plants grow into water, stone into water gives sand, lava melts sand and metal (where metal gets melted at a slower rate).\\
+\\
+Since there hasn't been implemented a feature like pressure, we would like to add this to Diving Beet.
+This will add the feature that if there is to much pressure on a wall the wall should break.
+
+\section{Analysing}
+Diving beet has been implemented using hoods, that has holds 4 elements in a grid. (see figure \ref{hoods})
+
+\begin{figure}[H]
+\centering
+\Grid{4}{4}
+\caption{Showing 4 hoods each containing 4 elements}
+\label{hoods}
+\end{figure}
+
+The elements that are these hoods holds, are etc water, fire, stone, etc.\\
+Since we want to implement pressure to the program, we will use the same data structure, and then scan each hoods and calculate how much pressure there is.
 
 
 \section{Approach}
+<<<<<<< HEAD
 Hoods have the size 2x2. Our pressure function only works on columns, so for the sake of brevity, when describing how the pressure works, and proving the operator works, we assume hoods are 1x2, i.e. its just a column. In reality we treat a hood like two seperete columns, so assuming 1x2 is not far from the truth. This also caries on to the part about proof of assosiativity.
 \\
 \\
-A key part of using a parallel scan is that the operator i assosiative. Since we have these hoods units, which for each column actually holds two values, we cannot just scan over them. If we did this, we would risk throwing information away, since the calculation on two hoods are based only on the lower part of the first hood and the whole second hood. The reason we cannot use both entries in the first hood, is that is would result in values being used twice.
+A key part of using a parallel scan is that the operator is assosiative. Since we have these hoods units, which for each column actually holds two values, we cannot just scan over them. If we did this, we would risk throwing information away, since the calculation on two hoods are based only on the lower part of the first hood and the whole second hood. The reason we cannot use both entries in the first hood, is that it would result in values being used twice.
 \\
 \\
 To solve this problem, our operator works directly on the elements. This cannot be used in the scan, since we are scanning over hoods. So we start out by mapping over the hoods in each colum, using our operator. This applies the operator to every pairs of elements in the hoods. After we have calculated the values inside the hoods, we can scan over the hoods, use the operator across hoods. This is by taking the lower part of the first hood, and applying it to the two elements in the lower hood.
 \\
-\\
+
 This method of first mapping, to calculate inner result, then scanning to get the results between elements, is a general approach. That works for all assosiative operators.
 \\
 \\
@@ -81,6 +139,9 @@ In the case where we
 
 TODO PICTURES
 
+\section{Discussion}
+
+\section{Conclusion}
 
 
 \end{document}
