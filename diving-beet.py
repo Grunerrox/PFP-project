@@ -68,7 +68,7 @@ def test_assoc(beet):
                     print thick11
 
 
-test_assoc(beet)
+#test_assoc(beet)
 #exit()
 beet_state = beet.new_game(width, height)
 
