@@ -31,14 +31,18 @@
     \foreach \x in {0,1,...,\maxX}{
     \draw (\x,0) -- (\x,\maxY);
     \draw[line width=2pt] (\maxX*0,0) -- (\maxX*0,\maxY);
+    \draw[line width=1pt, red] (\maxX*0.25,0) -- (\maxX*0.25,\maxY);
     \draw[line width=2pt] (\maxX*0.50,0) -- (\maxX*0.50,\maxY);
+    \draw[line width=1pt, red] (\maxX*0.75,0) -- (\maxX*0.75,\maxY);
     \draw[line width=2pt] (\maxX*1,0) -- (\maxX*1,\maxY);
     }
     %
     \foreach \y in {0,1,...,\maxY}{
     \draw (0,\y) -- (\maxX,\y);
-    \draw[line width=2pt] (0,\maxY*1) -- (\maxX,\maxY*1);    
+    \draw[line width=2pt] (0,\maxY*1) -- (\maxX,\maxY*1);  
+    \draw[line width=1pt,red] (0,\maxY*0.25) -- (\maxX,\maxY*0.25);  
     \draw[line width=2pt] (0,\maxY*0.50) -- (\maxX,\maxY*0.50);
+    \draw[line width=1pt,red] (0,\maxY*0.75) -- (\maxX,\maxY*0.75);
     \draw[line width=2pt] (0,\maxY*0) -- (\maxX,\maxY*0);    
     }
   \end{tikzpicture}
